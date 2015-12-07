@@ -209,7 +209,7 @@ class Repo(object):
 
         return rv
 
-    def install(self, package, python=None, editable=False, system_site_packages=False):
+    def install(self, package, python=None, editable=False, system_site_packages=False, index_url=None):
         package, install_args = self.resolve_package(package, python)
 
         venv_path = self.get_package_path(package)
@@ -243,6 +243,8 @@ class Repo(object):
             args = [os.path.join(venv_path, BIN_DIR, 'pip'), 'install']
             if editable:
                 args.append('--editable')
+            if index_url:
+                args.append('--index-url ' + index_url)
 
             if Popen(args + install_args).wait() != 0:
                 click.echo('Failed to pip install.  Aborting.')
@@ -347,15 +349,18 @@ def cli(ctx, home, bin_dir):
 @click.option('--system-site-packages', is_flag=True,
               help='Give the virtual environment access to the global '
                    'site-packages.')
+@click.option('--index-url', '-i', default=None,
+              help='Base URL of Python Package Index '
+                   '(default https://pypi.python.org/simple).')
 @click.pass_obj
-def install(repo, package, python, editable, system_site_packages):
+def install(repo, package, python, editable, system_site_packages, index_url):
     """Installs scripts from a Python package.
 
     Given a package this will install all the scripts and their dependencies
     of the given Python package into a new virtualenv and symlinks the
     discovered scripts into BIN_DIR (defaults to ~/.local/bin).
     """
-    if repo.install(package, python, editable, system_site_packages):
+    if repo.install(package, python, editable, system_site_packages, index_url):
         click.echo('Done.')
     else:
         sys.exit(1)
