@@ -244,7 +244,7 @@ class Repo(object):
             if editable:
                 args.append('--editable')
             if index_url:
-                args.append('--index-url ' + index_url)
+                args.extend(['--index-url', index_url])
 
             if Popen(args + install_args).wait() != 0:
                 click.echo('Failed to pip install.  Aborting.')
@@ -273,7 +273,7 @@ class Repo(object):
         paths.extend(self.find_installed_executables(path))
         return UninstallInfo(package, paths)
 
-    def upgrade(self, package, editable=False):
+    def upgrade(self, package, editable=False, index_url=None):
         package, install_args = self.resolve_package(package)
 
         venv_path = self.get_package_path(package)
@@ -289,6 +289,8 @@ class Repo(object):
                 '--upgrade']
         if editable:
             args.append('--editable')
+        if index_url:
+            args.extend(['--index-url', index_url])
 
         if Popen(args + install_args).wait() != 0:
             click.echo('Failed to upgrade through pip.  Aborting.')
@@ -372,10 +374,13 @@ def install(repo, package, python, editable, system_site_packages, index_url):
 @click.option('--editable', '-e', is_flag=True,
               help='Enable editable installation.  This only works for '
                    'locally installed packages.')
+@click.option('--index-url', '-i', default=None,
+              help='Base URL of Python Package Index '
+                   '(default https://pypi.python.org/simple).')
 @click.pass_obj
-def upgrade(repo, package, editable):
+def upgrade(repo, package, editable, index_url):
     """Upgrades an already installed package."""
-    if repo.upgrade(package, editable):
+    if repo.upgrade(package, editable, index_url):
         click.echo('Done.')
     else:
         sys.exit(1)
